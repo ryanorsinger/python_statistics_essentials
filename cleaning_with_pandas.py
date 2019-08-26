@@ -28,4 +28,6 @@ bmelt
 
 billboard.head()
 melt = billboard.melt(["artist.inverted", "track", "time", "genre"], ["x1st.week", "x76th.week"], 'week', 'rank')
+melt.week = melt.week.str.extract('(\d+)')
+melt = melt.rename(columns={"artist.inverted": "artist"})
 melt.head()
