@@ -27,7 +27,39 @@ bmelt = bshort.melt(['artist', 'track', 'time', 'date.entered'], ['wk1', 'wk2', 
 bmelt
 
 billboard.head()
-melt = billboard.melt(["artist.inverted", "track", "time", "genre"], ["x1st.week", "x76th.week"], 'week', 'rank')
+melt = billboard.melt(["artist.inverted", "track", "time", "genre", 'date.entered', 'date.peaked'], ["x1st.week", "x76th.week"], 'week', 'rank')
 melt.week = melt.week.str.extract('(\d+)')
 melt = melt.rename(columns={"artist.inverted": "artist"})
 melt.head()
+melt.tail()
+
+# Query takes a query as a string
+melt.query('track == "Liar"')
+
+# Convert the week field into an integer
+melt.week = pd.to_numeric(melt.week)
+
+melt["date.entered"] = pd.to_datetime(melt["date.entered"])
+melt["date.peaked"] = pd.to_datetime(melt["date.peaked"])
+
+melt["date"] = melt["date.entered"][0] + pd.Timedelta("7 days") * (melt["week"] - 1)
+melt = melt.drop(['date.entered'], axis=1)
+melt.head()
+
+# Short the columns and the rows
+billboard_final = melt[["artist", "track", "time", "date", "week", "rank"]]
+billboard_final.sort_values(["artist", "track"], inplace=True)
+
+# Remove duplication by normalizing
+tracks = billboard_final[["artist", "track", "time"]].drop_duplicates()
+tracks.index.name = "id"
+tracks = tracks.reset_index()
+tracks.head()
+
+# Join the dataframes back together
+tidy = pd.merge(tracks, billboard_final, on=["track", "artist", "time"]).drop(["artist", "track", "time"], axis=1)
+tidy.head()
+
+## 
+tidy.loc[tidy[tidy.week == 1]["rank"].index]
+tracks.query('id == 1')
